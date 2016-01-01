@@ -14,16 +14,9 @@ defmodule Plant do
   end
 
   def get_str_replace_combinations(initial, pattern, replacement) do
-    parts = String.split(initial, pattern)
-    parts_count = length(parts)
-    case parts_count do
-      1 -> [] # no match
-      _ ->
-        for i <- 1..(length(parts)-1), i > 0 do
-          parts |> Enum.split(i) |> Tuple.to_list
-                |> Enum.map(&Enum.join(&1, pattern))
-                |> Enum.join(replacement)
-        end
+    matches = :binary.matches(initial, pattern)
+    for match <- matches do
+      :binary.replace(initial, pattern, replacement, [{:scope, match}])
     end
   end
 
