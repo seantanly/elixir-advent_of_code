@@ -44,7 +44,7 @@ HOH
 |> Plant.step
 |> IO.inspect
 |> (&({&1, Enum.count(&1) |> IO.inspect} |> elem(0))).()
-|> Enum.into(MapSet.new)
+|> Enum.uniq
 |> Enum.count
 |> IO.inspect
 
@@ -61,7 +61,7 @@ HOHOHO
 |> Plant.parse_inputs
 |> Plant.step
 |> (&({&1, Enum.count(&1) |> IO.inspect} |> elem(0))).()
-|> Enum.into(MapSet.new)
+|> Enum.uniq
 |> Enum.count
 |> IO.inspect
 
@@ -75,7 +75,7 @@ H2O
 """
 |> Plant.parse_inputs
 |> Plant.step
-|> Enum.into(MapSet.new)
+|> Enum.uniq
 |> IO.inspect
 |> Enum.count
 
@@ -85,7 +85,7 @@ result = Path.join(__DIR__, "input.txt")
 |> File.read!
 |> Plant.parse_inputs
 |> Plant.step
-|> Enum.into(MapSet.new)
+|> Enum.uniq
 |> Enum.count
 |> IO.inspect
 
