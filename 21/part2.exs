@@ -12,29 +12,41 @@ defmodule M do
       # |> IO.inspect
     end
 
-    def permutate(list, r1..r2, inert_func \\ fn _i -> nil end) do
-      # introduce inert factors into the base set for permutating less than max combinations
-      (for i <- 1..(r2 - r1), r2 > r1, do: inert_func.(i)) ++ list
-      |> do_permutate(r2, [], [])
+    def combination(collection, k) when is_integer(k) and k >= 0 do 
+      list = collection |> Enum.into([])
+      list_length = Enum.count(list)
+      if k > list_length do
+        raise Enum.OutOfBoundsError 
+      else 
+        do_combination(list, list_length, k, [], [])
+      end
     end
-    # Permuate nCr
-    def do_permutate(list, 1, _, _), do: list
-    def do_permutate(list, r, pick_acc, acc) do
+    def combination(collection, k1..k2) when k2 >= k1 do
+      k1..k2 |> Enum.flat_map(fn k -> combination(collection, k) end)
+    end
+    defp do_combination(_, _, 0, _, _), do: [[]]
+    defp do_combination(list, _, 1, _, _), do: list |> Enum.map(&([&1])) # optimization
+    defp do_combination(list, list_length, k, pick_acc, acc) do
       list
       |> Stream.unfold(fn [h | t] -> {{h, t}, t} end)
-      |> Enum.take(length(list))
-      |> Enum.filter(fn {_x, nlist} -> length(pick_acc) + 1 + length(nlist) >= r end)
-      |> Enum.reduce(acc, fn {x, nlist}, acc ->
-        pick_acc = [x | pick_acc]
-        case length(pick_acc) do
-          ^r -> [pick_acc | acc]
-          _  -> do_permutate(nlist, r, pick_acc, acc)
+      |> Enum.take(list_length)
+      |> Enum.reduce(acc, fn {x, sublist}, acc ->
+        sublist_length = Enum.count(sublist)
+        pick_acc_length = Enum.count(pick_acc)
+        if k > pick_acc_length + 1 + sublist_length do
+          acc
+        else
+          new_pick_acc = [x | pick_acc]
+          new_pick_acc_length = pick_acc_length + 1
+          case new_pick_acc_length do
+            ^k -> [new_pick_acc | acc]
+            _  -> do_combination(sublist, sublist_length, k, new_pick_acc, acc)
+          end
         end
       end)
     end
   end
 
-  @inert_item_func &({"None #{&1}", 0, 0, 0})
   # 1 weapon
   @weapons (
     """
@@ -46,7 +58,7 @@ defmodule M do
     Greataxe     74     8       0
     """
     |> N.parse_stats
-    |> N.permutate(1..1, @inert_item_func)
+    |> N.combination(1)
     # |> IO.inspect
   )
   # 0..1 armor
@@ -60,7 +72,7 @@ defmodule M do
     Platemail   102     0       5
     """
     |> N.parse_stats
-    |> N.permutate(0..1, @inert_item_func)
+    |> N.combination(0..1)
     # |> IO.inspect
   )
   # 0..2 rings
@@ -75,7 +87,7 @@ defmodule M do
     Defense +3   80     0       3
     """
     |> N.parse_stats
-    |> N.permutate(0..2, @inert_item_func)
+    |> N.combination(0..2)
     # |> IO.inspect
   )
 
@@ -88,7 +100,7 @@ defmodule M do
 
   def find_equips(monster_stats, player_points) do
     for wpn <- @weapons, amr <- @armors, rings <- @rings do
-      equips = [wpn] ++ [amr] ++ rings
+      equips = wpn ++ amr ++ rings
       equip_stats =
         equips
         |> Enum.reduce({0, 0, 0}, fn item, acc ->
